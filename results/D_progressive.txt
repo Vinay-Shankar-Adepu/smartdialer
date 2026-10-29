@@ -1,0 +1,39 @@
+====================================================================================================
+Scenario D: Changing answer rate and talk time + agent drop  |  mode=progressive  |  3600s simulated
+  100 agents, Provider A. Starts 50% / 90s; at t=900s 70% / 180s; at t=1500s 40 of 100 agents vanish within 5s (back at t=2100s); at t=2400s the answer rate collapses to 10% with 60s talk.
+----------------------------------------------------------------------------------------------------
+  Agent utilization (talk time / logged-in time):  59.4%
+  Dialed   6658  (111.0/min)   Answered  1771   Connected  1771 (29.5/min)
+  Abandoned    0  -> abandon rate 0.00% (target <= 3%)   Provider errors 0   Breaker trips 0
+  Safety verdicts per tick: {'REDUCED': 2, 'APPROVED': 3598}   Permit violations: 0
+  Event outcomes: {'APPLIED': 13933, 'IGNORED_TERMINAL': 38}
+  Timeline:
+    t=900s  answer rate 50% -> 70%
+    t=900s  avg talk time 90s -> 180s
+    t=1500s  40 agents start disappearing over 5s
+    t=2100s  40 agents log back in
+    t=2400s  answer rate 70% -> 10%
+    t=2400s  avg talk time 180s -> 60s
+  Per-bucket timeline:
+           window   util  dialed  conn aband  dominant verdict
+        0-  300s  67.1%     534   268     0  APPROVED
+      300-  600s  67.1%     477   229     0  APPROVED
+      600-  900s  67.4%     476   231     0  APPROVED
+      900- 1200s  82.7%     256   170     0  APPROVED
+     1200- 1500s  87.1%     194   147     0  APPROVED
+     1500- 1800s  86.5%     123    93     0  APPROVED
+     1800- 2100s  87.1%     117    78     0  APPROVED
+     2100- 2400s  85.9%     239   169     0  APPROVED
+     2400- 2700s  43.6%     808    80     0  APPROVED
+     2700- 3000s  22.5%    1139   111     0  APPROVED
+     3000- 3300s  18.5%    1186   101     0  APPROVED
+     3300- 3600s  19.5%    1109    94     0  APPROVED
+  Sample pacing decisions (why N calls):
+    t=    0s  [REDUCED -> 50] Progressive: 100 idle agent(s) -> dial 100 (each call reserves its agent first)
+           safety: capped at 50: idle agents 100 - unbound in-flight 0, tick cap 50
+    t=    1s  [REDUCED -> 50] Progressive: 53 idle agent(s) -> dial 53 (each call reserves its agent first)
+           safety: capped at 50: idle agents 53 - unbound in-flight 0, tick cap 50
+    t=    2s  [APPROVED -> 8] Progressive: 8 idle agent(s) -> dial 8 (each call reserves its agent first)
+
+  (simulated 3600s in 31.9s wall time)
+

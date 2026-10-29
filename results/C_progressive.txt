@@ -1,0 +1,50 @@
+====================================================================================================
+Scenario C: 70% answer, 180s talk, chaotic provider + outage  |  mode=progressive  |  3600s simulated
+  50 agents on Provider B (slow, timeouts, ghost calls, duplicate and out-of-order events), 70% answer rate, 180s avg talk; full 120s provider outage at t=1200s.
+----------------------------------------------------------------------------------------------------
+  Agent utilization (talk time / logged-in time):  84.4%
+  Dialed   1404  (23.4/min)   Answered   855   Connected   855 (14.2/min)
+  Abandoned    0  -> abandon rate 0.00% (target <= 3%)   Provider errors 136   Breaker trips 4
+  Safety verdicts per tick: {'APPROVED': 3480, 'REJECTED': 116, 'FALLBACK_PROGRESSIVE': 4}   Permit violations: 0
+  Event outcomes: {'APPLIED': 3246, 'DUPLICATE_EVENT_ID': 640, 'IGNORED_TERMINAL': 132, 'NOOP_SAME_STATE': 61, 'IGNORED_STALE': 31}
+  Recovery actions: {'stuck_waiting_for_provider': 5}
+  Timeline:
+    t=1200s  provider outage for 120s
+  Per-bucket timeline:
+           window   util  dialed  conn aband  dominant verdict
+        0-  300s  83.8%     133    95     0  APPROVED
+      300-  600s  85.2%      98    72     0  APPROVED
+      600-  900s  84.0%     106    69     0  APPROVED
+      900- 1200s  85.3%     100    69     0  APPROVED
+     1200- 1500s  82.9%      90    58     0  APPROVED
+     1500- 1800s  82.3%     114    74     0  APPROVED
+     1800- 2100s  85.9%      97    66     0  APPROVED
+     2100- 2400s  84.9%     107    72     0  APPROVED
+     2400- 2700s  83.9%     110    75     0  APPROVED
+     2700- 3000s  84.5%     113    71     0  APPROVED
+     3000- 3300s  84.5%     102    70     0  APPROVED
+     3300- 3600s  85.2%      98    64     0  APPROVED
+  Sample pacing decisions (why N calls):
+    t=    0s  [APPROVED -> 50] Progressive: 50 idle agent(s) -> dial 50 (each call reserves its agent first)
+    t=    1s  [APPROVED -> 7] Progressive: 7 idle agent(s) -> dial 7 (each call reserves its agent first)
+    t=    2s  [APPROVED -> 1] Progressive: 1 idle agent(s) -> dial 1 (each call reserves its agent first)
+    t= 1207s  [REJECTED -> 0] Progressive: 1 idle agent(s) -> dial 1 (each call reserves its agent first)
+           safety: provider circuit OPEN (dial failures or silence); waiting for cool-down
+    t= 1236s  [FALLBACK_PROGRESSIVE -> 1] Progressive: 1 idle agent(s) -> dial 1 (each call reserves its agent first)
+           safety: provider circuit HALF_OPEN: single probe call
+    t= 1237s  [REJECTED -> 0] Progressive: 1 idle agent(s) -> dial 1 (each call reserves its agent first)
+           safety: provider circuit OPEN (dial failures or silence); waiting for cool-down
+    t= 1266s  [FALLBACK_PROGRESSIVE -> 1] Progressive: 1 idle agent(s) -> dial 1 (each call reserves its agent first)
+           safety: provider circuit HALF_OPEN: single probe call
+    t= 1267s  [REJECTED -> 0] Progressive: 1 idle agent(s) -> dial 1 (each call reserves its agent first)
+           safety: provider circuit OPEN (dial failures or silence); waiting for cool-down
+    t= 1296s  [FALLBACK_PROGRESSIVE -> 1] Progressive: 1 idle agent(s) -> dial 1 (each call reserves its agent first)
+           safety: provider circuit HALF_OPEN: single probe call
+    t= 1297s  [REJECTED -> 0] Progressive: 1 idle agent(s) -> dial 1 (each call reserves its agent first)
+           safety: provider circuit OPEN (dial failures or silence); waiting for cool-down
+    t= 1326s  [FALLBACK_PROGRESSIVE -> 1] Progressive: 3 idle agent(s) -> dial 3 (each call reserves its agent first)
+           safety: provider circuit HALF_OPEN: single probe call
+    t= 1327s  [APPROVED -> 2] Progressive: 2 idle agent(s) -> dial 2 (each call reserves its agent first)
+
+  (simulated 3600s in 15.1s wall time)
+

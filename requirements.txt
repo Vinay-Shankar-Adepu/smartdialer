@@ -1,0 +1,3 @@
+# SmartDialer uses only the Python standard library (Python 3.9+):
+#   sqlite3, threading, dataclasses, enum, hmac, argparse, unittest
+# enum34 is NOT needed: enum has been in the standard library since Python 3.4.

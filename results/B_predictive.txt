@@ -1,0 +1,47 @@
+====================================================================================================
+Scenario B: 50% answer, 90s talk  |  mode=predictive  |  3600s simulated
+  50 agents, Provider A, 50% answer rate, 90s avg talk, 10s wrap-up.
+----------------------------------------------------------------------------------------------------
+  Agent utilization (talk time / logged-in time):  78.6%
+  Dialed   3392  (56.5/min)   Answered  1646   Connected  1635 (27.2/min)
+  Abandoned   11  -> abandon rate 0.67% (target <= 3%)   Provider errors 0   Breaker trips 0
+  Safety verdicts per tick: {'FALLBACK_PROGRESSIVE': 375, 'APPROVED': 3212, 'REDUCED': 13}   Permit violations: 0
+  Event outcomes: {'APPLIED': 7995, 'IGNORED_TERMINAL': 11}
+  Per-bucket timeline:
+           window   util  dialed  conn aband  dominant verdict
+        0-  300s  70.7%     267   133     5  FALLBACK_PROGRESSIVE
+      300-  600s  75.0%     273   132     1  APPROVED
+      600-  900s  80.1%     265   147     0  APPROVED
+      900- 1200s  77.2%     306   129     0  APPROVED
+     1200- 1500s  81.8%     283   136     0  APPROVED
+     1500- 1800s  78.9%     278   137     2  APPROVED
+     1800- 2100s  81.4%     281   150     0  APPROVED
+     2100- 2400s  79.8%     254   130     1  APPROVED
+     2400- 2700s  79.7%     285   132     0  APPROVED
+     2700- 3000s  79.9%     274   141     0  APPROVED
+     3000- 3300s  79.3%     307   129     1  APPROVED
+     3300- 3600s  80.0%     319   139     1  APPROVED
+  Sample pacing decisions (why N calls):
+    t=    0s  [FALLBACK_PROGRESSIVE -> 50] Predictive: dial 90. p=0.50 (upper bound; estimate 0.30 from 0 calls), L=10.0s; free agents = 50 idle + 0 wrap-up + 0.0 talking - 0 waiting = 50.0; x aggression 1.00 -> 90.1 lines (k=1) - 0 already ringing = 90
+           safety: low confidence: only 0 call outcomes in the last 300s (need 30)
+    t=    1s  [FALLBACK_PROGRESSIVE -> 3] Predictive: dial 3. p=0.50 (upper bound; estimate 0.30 from 0 calls), L=10.0s; free agents = 3 idle + 0 wrap-up + 0.0 talking - 0 waiting = 3.0; x aggression 1.00 -> 4.0 lines (k=1) - 0 already ringing = 3
+           safety: low confidence: only 0 call outcomes in the last 300s (need 30)
+    t=    2s  [FALLBACK_PROGRESSIVE -> 5] Predictive: dial 9. p=0.36 (upper bound; estimate 0.20 from 5 calls), L=10.0s; free agents = 5 idle + 0 wrap-up + 0.0 talking - 0 waiting = 5.0; x aggression 1.00 -> 9.8 lines (k=1) - 0 already ringing = 9
+           safety: low confidence: only 5 call outcomes in the last 300s (need 30)
+    t=   15s  [APPROVED -> 0] Predictive: dial 0. p=0.78 (upper bound; estimate 0.70 from 30 calls), L=9.9s; free agents = 0 idle + 0 wrap-up + 0.0 talking - 0 waiting = 0.0; x aggression 1.00 -> 0.0 lines (k=1) - 0 already ringing = 0
+    t=   26s  [REDUCED -> 10] Predictive: dial 31. p=0.55 (upper bound; estimate 0.47 from 50 calls), L=9.9s; free agents = 20 idle + 0 wrap-up + 0.0 talking - 0 waiting = 20.0; x aggression 1.00 -> 31.4 lines (k=1) - 0 already ringing = 31
+           safety: capped at 10: ramp limit 0.5 new lines per free agent per tick (20.0 free)
+    t=   30s  [APPROVED -> 2] Predictive: dial 2. p=0.48 (upper bound; estimate 0.41 from 59 calls), L=9.9s; free agents = 25 idle + 1 wrap-up + 0.0 talking - 0 waiting = 26.0; x aggression 1.00 -> 46.8 lines (k=1) - 44 already ringing = 2
+    t=   41s  [FALLBACK_PROGRESSIVE -> 0] Predictive: dial 0. p=0.64 (upper bound; estimate 0.58 from 88 calls), L=9.8s; free agents = 0 idle + 0 wrap-up + 0.0 talking - 3 waiting = 0.0; x aggression 1.00 -> 0.0 lines (k=1) - 17 already ringing = 0
+           safety: answer burst: 3 answered callers waiting with no free agent
+    t=  401s  [REDUCED -> 2] Predictive: dial 3. p=0.57 (upper bound; estimate 0.53 from 218 calls), L=10.1s; free agents = 2 idle + 1 wrap-up + 0.0 talking - 0 waiting = 3.0; x aggression 1.00 -> 3.7 lines (k=1) - 0 already ringing = 3
+           safety: capped at 2: ramp limit 0.5 new lines per free agent per tick (3.0 free)
+    t=  403s  [APPROVED -> 1] Predictive: dial 1. p=0.57 (upper bound; estimate 0.52 from 219 calls), L=10.2s; free agents = 4 idle + 1 wrap-up + 0.1 talking - 0 waiting = 5.1; x aggression 1.00 -> 6.7 lines (k=1) - 5 already ringing = 1
+    t= 1642s  [REDUCED -> 3] Predictive: dial 4. p=0.56 (upper bound; estimate 0.52 from 257 calls), L=9.7s; free agents = 0 idle + 6 wrap-up + 0.0 talking - 0 waiting = 6.0; x aggression 1.00 -> 8.2 lines (k=1) - 4 already ringing = 4
+           safety: capped at 3: ramp limit 0.5 new lines per free agent per tick (6.0 free)
+    t= 1643s  [APPROVED -> 0] Predictive: dial 0. p=0.56 (upper bound; estimate 0.52 from 258 calls), L=9.7s; free agents = 1 idle + 4 wrap-up + 0.0 talking - 0 waiting = 5.0; x aggression 1.00 -> 6.7 lines (k=1) - 6 already ringing = 0
+    t= 1945s  [REDUCED -> 4] Predictive: dial 5. p=0.52 (upper bound; estimate 0.48 from 290 calls), L=10.7s; free agents = 1 idle + 6 wrap-up + 0.4 talking - 0 waiting = 7.4; x aggression 1.00 -> 11.0 lines (k=1) - 6 already ringing = 5
+           safety: capped at 4: ramp limit 0.5 new lines per free agent per tick (7.4 free)
+
+  (simulated 3600s in 21.2s wall time)
+

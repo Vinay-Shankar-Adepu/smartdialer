@@ -1,0 +1,30 @@
+====================================================================================================
+Scenario A: 20% answer, 120s talk  |  mode=progressive  |  3600s simulated
+  50 agents, Provider A, 20% answer rate, 120s avg talk, 10s wrap-up.
+----------------------------------------------------------------------------------------------------
+  Agent utilization (talk time / logged-in time):  50.9%
+  Dialed   4239  (70.7/min)   Answered   782   Connected   782 (13.0/min)
+  Abandoned    0  -> abandon rate 0.00% (target <= 3%)   Provider errors 0   Breaker trips 0
+  Safety verdicts per tick: {'APPROVED': 3600}   Permit violations: 0
+  Event outcomes: {'APPLIED': 8526}
+  Per-bucket timeline:
+           window   util  dialed  conn aband  dominant verdict
+        0-  300s  47.2%     398    70     0  APPROVED
+      300-  600s  49.3%     360    63     0  APPROVED
+      600-  900s  50.4%     344    58     0  APPROVED
+      900- 1200s  50.3%     355    72     0  APPROVED
+     1200- 1500s  49.2%     358    65     0  APPROVED
+     1500- 1800s  52.3%     341    68     0  APPROVED
+     1800- 2100s  52.6%     351    58     0  APPROVED
+     2100- 2400s  55.9%     305    73     0  APPROVED
+     2400- 2700s  51.4%     354    64     0  APPROVED
+     2700- 3000s  49.5%     346    63     0  APPROVED
+     3000- 3300s  48.0%     385    68     0  APPROVED
+     3300- 3600s  55.0%     342    60     0  APPROVED
+  Sample pacing decisions (why N calls):
+    t=    0s  [APPROVED -> 50] Progressive: 50 idle agent(s) -> dial 50 (each call reserves its agent first)
+    t=    1s  [APPROVED -> 3] Progressive: 3 idle agent(s) -> dial 3 (each call reserves its agent first)
+    t=    2s  [APPROVED -> 6] Progressive: 6 idle agent(s) -> dial 6 (each call reserves its agent first)
+
+  (simulated 3600s in 22.4s wall time)
+

@@ -1,0 +1,95 @@
+test_agent_vanishing_mid_conversation_ends_call_and_frees_nothing_twice (tests.test_agent_disappearance.AgentDisappearanceTest) ... ok
+test_answered_call_with_no_agent_left_is_abandoned_and_hung_up (tests.test_agent_disappearance.AgentDisappearanceTest) ... ok
+test_forty_of_hundred_agents_vanish_in_five_seconds (tests.test_agent_disappearance.AgentDisappearanceTest) ... ok
+test_ringing_call_of_vanished_agent_goes_to_another_agent (tests.test_agent_disappearance.AgentDisappearanceTest) ... ok
+test_concurrent_borrower_claims_are_unique (tests.test_concurrent_reservation.ConcurrentReservationTest) ... ok
+test_many_workers_many_agents_no_double_booking (tests.test_concurrent_reservation.ConcurrentReservationTest) ... ok
+test_pacer_lease_has_one_holder_under_a_race (tests.test_concurrent_reservation.ConcurrentReservationTest) ... ok
+test_release_requires_ownership (tests.test_concurrent_reservation.ConcurrentReservationTest) ... ok
+test_stale_version_cannot_overwrite (tests.test_concurrent_reservation.ConcurrentReservationTest)
+Deterministic interleaving: A reads, B reserves, A's CAS must fail. ... ok
+test_two_workers_same_agent_exactly_one_wins (tests.test_concurrent_reservation.ConcurrentReservationTest) ... ok
+test_unavailable_agent_cannot_be_reserved (tests.test_concurrent_reservation.ConcurrentReservationTest) ... ok
+test_only_one_worker_paces_and_a_survivor_takes_over (tests.test_concurrent_reservation.SinglePacerTest) ... ok
+test_concurrent_duplicate_delivery_applies_once (tests.test_duplicate_events.DuplicateEventsTest)
+Two webhook handlers receive the same event at the same instant. ... ok
+test_duplicate_answered_after_connect_does_not_reconnect (tests.test_duplicate_events.DuplicateEventsTest) ... ok
+test_duplicate_completed_releases_agent_once (tests.test_duplicate_events.DuplicateEventsTest) ... ok
+test_duplicate_no_answer_spends_one_attempt (tests.test_duplicate_events.DuplicateEventsTest) ... ok
+test_same_event_id_twice_is_a_noop (tests.test_duplicate_events.DuplicateEventsTest) ... ok
+test_same_transition_with_new_event_id_is_a_noop (tests.test_duplicate_events.DuplicateEventsTest)
+A buggy retry with a fresh id beats id-dedup, so the state machine catches it. ... ok
+test_answered_before_ringing (tests.test_out_of_order_events.OutOfOrderEventsTest) ... ok
+test_assignment_sequences_verbatim (tests.test_out_of_order_events.OutOfOrderEventsTest)
+The two sequences from the assignment, each answered event with its own id. ... ok
+test_classification_is_total_and_never_moves_backwards (tests.test_out_of_order_events.OutOfOrderEventsTest) ... ok
+test_completed_before_ringing_and_answered (tests.test_out_of_order_events.OutOfOrderEventsTest) ... ok
+test_event_arrives_before_worker_records_initiated (tests.test_out_of_order_events.OutOfOrderEventsTest)
+Fast provider: RINGING is processed while the call is still RESERVED. ... ok
+test_event_for_unknown_call_is_recorded_not_fatal (tests.test_out_of_order_events.OutOfOrderEventsTest) ... ok
+test_provider_b_chaos_keeps_invariants (tests.test_out_of_order_events.OutOfOrderEventsTest)
+15 minutes of Provider B: jitter, duplicates, re-ids, stale events, ... ok
+test_collapse_70_to_10_is_safe (tests.test_predictive_logic.AnswerRateShiftTest)
+Fewer answers than predicted means idle agents, never abandoned callers. ... ok
+test_jump_10_to_70_is_bounded_and_stops_fast (tests.test_predictive_logic.AnswerRateShiftTest)
+The dangerous direction. Lines already ringing can't be recalled, so some abandons are ... ok
+test_agents_finishing_talk_counted_when_lookahead_allows (tests.test_predictive_logic.PredictiveFormulaTest) ... ok
+test_aggression_backs_off_near_abandon_target (tests.test_predictive_logic.PredictiveFormulaTest) ... ok
+test_answered_callers_waiting_consume_free_agents (tests.test_predictive_logic.PredictiveFormulaTest) ... ok
+test_cold_start_uses_prior (tests.test_predictive_logic.PredictiveFormulaTest) ... ok
+test_explanation_lists_every_input (tests.test_predictive_logic.PredictiveFormulaTest) ... ok
+test_k_zero_reduces_to_free_over_p (tests.test_predictive_logic.PredictiveFormulaTest) ... ok
+test_lines_already_ringing_are_subtracted (tests.test_predictive_logic.PredictiveFormulaTest) ... ok
+test_lower_answer_rate_dials_more (tests.test_predictive_logic.PredictiveFormulaTest) ... ok
+test_matches_hand_calculation (tests.test_predictive_logic.PredictiveFormulaTest) ... ok
+test_no_free_agents_means_no_dials (tests.test_predictive_logic.PredictiveFormulaTest) ... ok
+test_progressive_is_exactly_idle_agents (tests.test_predictive_logic.PredictiveFormulaTest) ... ok
+test_upper_bound_is_conservative_and_tightens_with_data (tests.test_predictive_logic.PredictiveFormulaTest) ... ok
+test_why_seventeen_not_ten (tests.test_predictive_logic.PredictiveFormulaTest)
+Interview question: same agents, but 'why 17?' The answer rate. ... ok
+test_abandon_rate_above_target_forces_progressive (tests.test_predictive_logic.SafetyOnPacingTest) ... ok
+test_answer_burst_forces_progressive (tests.test_predictive_logic.SafetyOnPacingTest) ... ok
+test_answer_rate_surge_is_capped (tests.test_predictive_logic.SafetyOnPacingTest)
+5-min window says 20%, but the last minute says 60%: pacing (on the ... ok
+test_blast_radius_cap (tests.test_predictive_logic.SafetyOnPacingTest) ... ok
+test_cold_start_falls_back_to_progressive (tests.test_predictive_logic.SafetyOnPacingTest) ... ok
+test_healthy_recommendation_is_approved (tests.test_predictive_logic.SafetyOnPacingTest) ... ok
+test_progressive_never_exceeds_idle_minus_unbound (tests.test_predictive_logic.SafetyOnPacingTest) ... ok
+test_ramp_limits_new_lines_per_tick (tests.test_predictive_logic.SafetyOnPacingTest) ... ok
+test_reduction_reason_names_the_limit_that_applied (tests.test_predictive_logic.SafetyOnPacingTest) ... ok
+test_tick_cap (tests.test_predictive_logic.SafetyOnPacingTest) ... ok
+test_breaker_opens_rejects_probes_and_recovers (tests.test_provider_outage.ProviderOutageTest) ... ok
+test_degraded_provider_forces_predictive_into_progressive (tests.test_provider_outage.ProviderOutageTest) ... ok
+test_dial_during_outage_fails_cleanly (tests.test_provider_outage.ProviderOutageTest) ... ok
+test_hard_deadline_frees_agents_if_provider_never_returns (tests.test_provider_outage.ProviderOutageTest) ... ok
+test_in_flight_calls_wait_out_the_outage (tests.test_provider_outage.ProviderOutageTest) ... ok
+test_lost_completed_event_is_reaped (tests.test_provider_outage.ProviderOutageTest)
+The provider ends a CONNECTED call but its COMPLETED webhook is lost. ... ok
+test_provider_b_ghost_call_on_timeout_is_hung_up (tests.test_provider_outage.ProviderOutageTest) ... ok
+test_silent_provider_trips_breaker (tests.test_provider_outage.ProviderOutageTest)
+Dials are accepted but webhooks never arrive. We are blind to those calls, ... ok
+test_call_must_be_reserved (tests.test_safety_bypass.SafetyBypassTest) ... ok
+test_expired_permit (tests.test_safety_bypass.SafetyBypassTest) ... ok
+test_forged_permit (tests.test_safety_bypass.SafetyBypassTest) ... ok
+test_only_the_gateway_holds_the_provider (tests.test_safety_bypass.SafetyBypassTest) ... ok
+test_pacing_engines_have_no_way_to_dial (tests.test_safety_bypass.SafetyBypassTest) ... ok
+test_permit_budget_is_enforced (tests.test_safety_bypass.SafetyBypassTest) ... ok
+test_permit_from_another_controller_is_rejected (tests.test_safety_bypass.SafetyBypassTest) ... ok
+test_progressive_permit_requires_reserved_agent (tests.test_safety_bypass.SafetyBypassTest) ... ok
+test_same_call_cannot_be_dialed_twice (tests.test_safety_bypass.SafetyBypassTest) ... ok
+test_tampered_permit (tests.test_safety_bypass.SafetyBypassTest) ... ok
+test_crash_after_claiming_borrower_before_call_row (tests.test_worker_crash.WorkerCrashTest) ... ok
+test_crash_after_dial_call_is_adopted_and_completes (tests.test_worker_crash.WorkerCrashTest) ... ok
+test_crash_after_dial_events_alone_self_heal (tests.test_worker_crash.WorkerCrashTest)
+Even without the sweep, provider events (keyed by OUR call id) move the call on. ... ok
+test_crash_after_reserving_agent_before_binding (tests.test_worker_crash.WorkerCrashTest)
+Agent reserved but the call row doesn't point at it yet: still released. ... ok
+test_crash_before_dial_releases_agent_and_borrower (tests.test_worker_crash.WorkerCrashTest) ... ok
+test_crash_between_answered_and_connected (tests.test_worker_crash.WorkerCrashTest) ... ok
+test_slow_worker_cannot_dial_after_reaper_cancelled_its_call (tests.test_worker_crash.WorkerCrashTest)
+A paused worker (GC pause, network stall) wakes up after its lease was ... ok
+
+----------------------------------------------------------------------
+Ran 75 tests in 8.633s
+
+OK

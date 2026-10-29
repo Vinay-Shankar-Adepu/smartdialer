@@ -1,0 +1,345 @@
+[
+  {
+    "scenario": "A",
+    "mode": "progressive",
+    "utilization": 0.5094777777777778,
+    "dialed": 4239,
+    "answered": 782,
+    "connected": 782,
+    "abandoned": 0,
+    "abandon_rate": 0.0,
+    "provider_errors": 0,
+    "dials_per_min": 70.65,
+    "connects_per_min": 13.033333333333333,
+    "verdicts": {
+      "APPROVED": 3600
+    },
+    "breaker_trips": 0,
+    "events": {
+      "APPLIED": 8526
+    },
+    "recovery": {},
+    "safety_violations": 0,
+    "calls_by_state": {
+      "INITIATED": 2,
+      "RINGING": 21,
+      "CONNECTED": 25,
+      "COMPLETED": 757,
+      "FAILED": 3434
+    },
+    "provider_stats": {
+      "events_delivered": 8526,
+      "placed": 4239,
+      "outcome_failed": 190,
+      "outcome_answered": 785,
+      "outcome_busy": 494,
+      "outcome_no_answer": 2770
+    }
+  },
+  {
+    "scenario": "A",
+    "mode": "predictive",
+    "utilization": 0.7744777777777778,
+    "dialed": 6366,
+    "answered": 1193,
+    "connected": 1186,
+    "abandoned": 7,
+    "abandon_rate": 0.00586756077116513,
+    "provider_errors": 0,
+    "dials_per_min": 106.1,
+    "connects_per_min": 19.766666666666666,
+    "verdicts": {
+      "FALLBACK_PROGRESSIVE": 386,
+      "REDUCED": 428,
+      "APPROVED": 2786
+    },
+    "breaker_trips": 0,
+    "events": {
+      "APPLIED": 12809,
+      "IGNORED_TERMINAL": 7
+    },
+    "recovery": {},
+    "safety_violations": 0,
+    "calls_by_state": {
+      "RINGING": 22,
+      "CONNECTED": 45,
+      "COMPLETED": 1141,
+      "FAILED": 5151,
+      "ABANDONED": 7
+    },
+    "provider_stats": {
+      "events_delivered": 12816,
+      "placed": 6366,
+      "outcome_failed": 289,
+      "outcome_answered": 1193,
+      "outcome_busy": 753,
+      "outcome_no_answer": 4131,
+      "hangups": 7
+    }
+  },
+  {
+    "scenario": "B",
+    "mode": "progressive",
+    "utilization": 0.6781666666666667,
+    "dialed": 2857,
+    "answered": 1417,
+    "connected": 1417,
+    "abandoned": 0,
+    "abandon_rate": 0.0,
+    "provider_errors": 0,
+    "dials_per_min": 47.61666666666667,
+    "connects_per_min": 23.616666666666667,
+    "verdicts": {
+      "APPROVED": 3600
+    },
+    "breaker_trips": 0,
+    "events": {
+      "APPLIED": 6782
+    },
+    "recovery": {},
+    "safety_violations": 0,
+    "calls_by_state": {
+      "INITIATED": 2,
+      "RINGING": 7,
+      "CONNECTED": 38,
+      "COMPLETED": 1379,
+      "FAILED": 1431
+    },
+    "provider_stats": {
+      "events_delivered": 6782,
+      "placed": 2857,
+      "outcome_failed": 109,
+      "outcome_answered": 1419,
+      "outcome_no_answer": 1138,
+      "outcome_busy": 191
+    }
+  },
+  {
+    "scenario": "B",
+    "mode": "predictive",
+    "utilization": 0.7864388888888889,
+    "dialed": 3392,
+    "answered": 1646,
+    "connected": 1635,
+    "abandoned": 11,
+    "abandon_rate": 0.006682867557715674,
+    "provider_errors": 0,
+    "dials_per_min": 56.53333333333333,
+    "connects_per_min": 27.25,
+    "verdicts": {
+      "FALLBACK_PROGRESSIVE": 375,
+      "APPROVED": 3212,
+      "REDUCED": 13
+    },
+    "breaker_trips": 0,
+    "events": {
+      "APPLIED": 7995,
+      "IGNORED_TERMINAL": 11
+    },
+    "recovery": {},
+    "safety_violations": 0,
+    "calls_by_state": {
+      "RINGING": 14,
+      "CONNECTED": 43,
+      "COMPLETED": 1592,
+      "FAILED": 1732,
+      "ABANDONED": 11
+    },
+    "provider_stats": {
+      "events_delivered": 8006,
+      "placed": 3392,
+      "outcome_failed": 131,
+      "outcome_answered": 1649,
+      "outcome_no_answer": 1376,
+      "outcome_busy": 236,
+      "hangups": 11
+    }
+  },
+  {
+    "scenario": "C",
+    "mode": "progressive",
+    "utilization": 0.8435277777777778,
+    "dialed": 1404,
+    "answered": 855,
+    "connected": 855,
+    "abandoned": 0,
+    "abandon_rate": 0.0,
+    "provider_errors": 136,
+    "dials_per_min": 23.4,
+    "connects_per_min": 14.25,
+    "verdicts": {
+      "APPROVED": 3480,
+      "REJECTED": 116,
+      "FALLBACK_PROGRESSIVE": 4
+    },
+    "breaker_trips": 4,
+    "events": {
+      "APPLIED": 3246,
+      "DUPLICATE_EVENT_ID": 640,
+      "IGNORED_TERMINAL": 132,
+      "NOOP_SAME_STATE": 61,
+      "IGNORED_STALE": 31
+    },
+    "recovery": {
+      "stuck_waiting_for_provider": 5
+    },
+    "safety_violations": 0,
+    "calls_by_state": {
+      "RINGING": 4,
+      "CONNECTED": 42,
+      "COMPLETED": 813,
+      "FAILED": 545
+    },
+    "provider_stats": {
+      "events_delivered": 4110,
+      "clean_timeouts": 65,
+      "placed": 1331,
+      "outcome_answered": 901,
+      "duplicates_sent": 674,
+      "duplicates_new_id_sent": 167,
+      "outcome_busy": 75,
+      "outcome_no_answer": 328,
+      "ghost_timeouts": 63,
+      "hangups": 63,
+      "stale_events_left": 24,
+      "outcome_failed": 27,
+      "initiate_timeout_outage": 8,
+      "lookup_timeout_outage": 13
+    }
+  },
+  {
+    "scenario": "C",
+    "mode": "predictive",
+    "utilization": 0.8875777777777778,
+    "dialed": 1493,
+    "answered": 915,
+    "connected": 904,
+    "abandoned": 9,
+    "abandon_rate": 0.009836065573770493,
+    "provider_errors": 144,
+    "dials_per_min": 24.883333333333333,
+    "connects_per_min": 15.066666666666666,
+    "verdicts": {
+      "FALLBACK_PROGRESSIVE": 563,
+      "APPROVED": 3028,
+      "REDUCED": 9
+    },
+    "breaker_trips": 0,
+    "events": {
+      "APPLIED": 3448,
+      "DUPLICATE_EVENT_ID": 683,
+      "IGNORED_TERMINAL": 144,
+      "NOOP_SAME_STATE": 71,
+      "IGNORED_STALE": 30
+    },
+    "recovery": {
+      "stuck_waiting_for_provider": 8
+    },
+    "safety_violations": 0,
+    "calls_by_state": {
+      "INITIATED": 1,
+      "RINGING": 5,
+      "CONNECTED": 40,
+      "COMPLETED": 866,
+      "FAILED": 572,
+      "ABANDONED": 9
+    },
+    "provider_stats": {
+      "events_delivered": 4376,
+      "clean_timeouts": 73,
+      "placed": 1420,
+      "outcome_answered": 968,
+      "duplicates_sent": 718,
+      "duplicates_new_id_sent": 177,
+      "outcome_busy": 82,
+      "outcome_no_answer": 340,
+      "ghost_timeouts": 71,
+      "hangups": 80,
+      "stale_events_left": 26,
+      "outcome_failed": 30,
+      "lookup_timeout_outage": 8
+    }
+  },
+  {
+    "scenario": "D",
+    "mode": "progressive",
+    "utilization": 0.5942043645776,
+    "dialed": 6658,
+    "answered": 1771,
+    "connected": 1771,
+    "abandoned": 0,
+    "abandon_rate": 0.0,
+    "provider_errors": 0,
+    "dials_per_min": 110.96666666666667,
+    "connects_per_min": 29.516666666666666,
+    "verdicts": {
+      "REDUCED": 2,
+      "APPROVED": 3598
+    },
+    "breaker_trips": 0,
+    "events": {
+      "APPLIED": 13933,
+      "IGNORED_TERMINAL": 38
+    },
+    "recovery": {},
+    "safety_violations": 0,
+    "calls_by_state": {
+      "INITIATED": 6,
+      "RINGING": 77,
+      "CONNECTED": 13,
+      "COMPLETED": 1758,
+      "FAILED": 4804
+    },
+    "provider_stats": {
+      "events_delivered": 13971,
+      "placed": 6658,
+      "outcome_failed": 298,
+      "outcome_answered": 1776,
+      "outcome_no_answer": 3866,
+      "outcome_busy": 718,
+      "hangups": 38
+    }
+  },
+  {
+    "scenario": "D",
+    "mode": "predictive",
+    "utilization": 0.7612781339720036,
+    "dialed": 14232,
+    "answered": 2631,
+    "connected": 2622,
+    "abandoned": 9,
+    "abandon_rate": 0.0034207525655644243,
+    "provider_errors": 0,
+    "dials_per_min": 237.2,
+    "connects_per_min": 43.7,
+    "verdicts": {
+      "FALLBACK_PROGRESSIVE": 339,
+      "APPROVED": 2245,
+      "REDUCED": 684,
+      "REJECTED": 332
+    },
+    "breaker_trips": 0,
+    "events": {
+      "APPLIED": 28470,
+      "IGNORED_TERMINAL": 46
+    },
+    "recovery": {},
+    "safety_violations": 0,
+    "calls_by_state": {
+      "RINGING": 201,
+      "CONNECTED": 63,
+      "COMPLETED": 2559,
+      "FAILED": 11400,
+      "ABANDONED": 9
+    },
+    "provider_stats": {
+      "events_delivered": 28516,
+      "placed": 14232,
+      "outcome_failed": 632,
+      "outcome_answered": 2644,
+      "outcome_no_answer": 9273,
+      "outcome_busy": 1683,
+      "hangups": 46
+    }
+  }
+]

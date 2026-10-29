@@ -1,0 +1,14 @@
+
+SmartDialer comparison: 3600s per run, seed=42
+
+scn mode           util  dials/min  conn/min  answered  abandon prov.err  safety verdicts (ticks)
+-----------------------------------------------------------------------------------------------------------------------------------------
+A   progressive   50.9%       70.7      13.0       782    0.00%        0  APPROVED=3600
+A   predictive    77.4%      106.1      19.8      1193    0.59%        0  APPROVED=2786, FALLBACK_PROGRESSIVE=386, REDUCED=428
+B   progressive   67.8%       47.6      23.6      1417    0.00%        0  APPROVED=3600
+B   predictive    78.6%       56.5      27.2      1646    0.67%        0  APPROVED=3212, FALLBACK_PROGRESSIVE=375, REDUCED=13
+C   progressive   84.4%       23.4      14.2       855    0.00%      136  APPROVED=3480, FALLBACK_PROGRESSIVE=4, REJECTED=116
+C   predictive    88.8%       24.9      15.1       915    0.98%      144  APPROVED=3028, FALLBACK_PROGRESSIVE=563, REDUCED=9
+D   progressive   59.4%      111.0      29.5      1771    0.00%        0  APPROVED=3598, REDUCED=2
+D   predictive    76.1%      237.2      43.7      2631    0.34%        0  APPROVED=2245, FALLBACK_PROGRESSIVE=339, REDUCED=684, REJECTED=332
+

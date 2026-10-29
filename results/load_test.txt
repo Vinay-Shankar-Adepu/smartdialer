@@ -1,0 +1,16 @@
+Part 1 - reservation race (file SQLite, WAL, one connection per thread)
+
+ agents  workers    res/s  CAS losses  loss %  all reserved  double-booked
+   1000        1     7221           0    0.0%          True              0
+   1000        4     5734          82    7.6%          True              0
+   1000       16     2736         456   31.3%          True              0
+   5000       16     5415         845   14.5%          True              0
+
+Part 2 - control-loop cost per 1 s tick (predictive, Provider A, 20% answer, 120 s talk)
+
+ agents   avg ms   p95 ms   max ms   dials/s  events/s  real-time?
+    100      7.6     22.2     55.2       2.8       6.0  yes
+   1000     65.2    170.9    241.4      20.4      38.7  yes
+  10000   2238.2   5553.6   5969.6    1058.0    1858.3  NO - tick slower than 1 s
+
+reservation correctness: PASS
