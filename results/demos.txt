@@ -1,0 +1,81 @@
+
+====================================================================================================
+1. WORKER CRASH: agent reserved > borrower reserved > call initiated > worker killed
+====================================================================================================
+  worker-1 died: kill -9 at after_dial  (no cleanup code ran)
+  t=   0.0s  right after the crash              call=RESERVED   agent=agent-000 RESERVED     borrower=RESERVED (attempts 0)
+  provider: lookup(call-worker-1-0000001) -> ProviderCallStatus(provider_call_id='PROVIDER_A-1', call_id='call-worker-1-0000001', is_live=True)   <- the borrower's phone IS ringing
+  worker-2 sweep before the 10 s lease expires: nothing (hands off)
+  worker-2 sweep after the lease expired:       {'lease_adopted': 1}
+  t=  11.0s  adopted: the agent stays with it   call=INITIATED  agent=agent-000 DIALING      borrower=RESERVED (attempts 0)
+  t= 131.0s  events drove it to the end         call=COMPLETED  agent=agent-000 freed, now on next call borrower=DONE (attempts 0)
+  -> nothing leaked: the borrower was reached by the agent that was reserved for them.
+
+  Variant: provider sends ANSWERED, the worker crashes, then COMPLETED arrives
+  worker-1 processes ANSWERED: APPLIED
+  t=   0.0s  ANSWERED, not yet bridged          call=ANSWERED   agent=agent-000 DIALING      borrower=RESERVED (attempts 0)
+  worker-1 dies before bridging. worker-2 takes over:
+  t=   0.0s  worker-2's bridge pass connected it call=CONNECTED  agent=agent-000 CONNECTED    borrower=RESERVED (attempts 0)
+  provider redelivers ANSWERED: DUPLICATE_EVENT_ID
+  COMPLETED arrives:            APPLIED
+  t=  30.0s  completed, agent wrapping up       call=COMPLETED  agent=agent-000 WRAP_UP      borrower=DONE (attempts 0)
+
+====================================================================================================
+2. PROVIDER OUTAGE: the provider starts timing out for 60 s
+====================================================================================================
+  t=20s healthy: 6 borrowers talking to agents (10-minute calls)
+  t=20s OUTAGE for 60 s: dials time out, webhooks stop, lookups fail.
+        4 more agents log in now, so the dialer has work to attempt
+
+  t=  20s  verdict=APPROVED              approved=4  timeouts so far=3   breaker after this tick=CLOSED    
+  t=  21s  verdict=APPROVED              approved=4  timeouts so far=6   breaker after this tick=OPEN      
+  t=  22s  verdict=REJECTED              approved=0  timeouts so far=6   breaker after this tick=OPEN      provider circuit OPEN (dial failures or silence); waiting 
+  t=  51s  verdict=FALLBACK_PROGRESSIVE  approved=1  timeouts so far=7   breaker after this tick=OPEN      provider circuit HALF_OPEN: single probe call
+  t=  52s  verdict=REJECTED              approved=0  timeouts so far=7   breaker after this tick=OPEN      provider circuit OPEN (dial failures or silence); waiting 
+  t=  81s  verdict=FALLBACK_PROGRESSIVE  approved=1  timeouts so far=7   breaker after this tick=CLOSED    provider circuit HALF_OPEN: single probe call
+  t=  82s  verdict=APPROVED              approved=3  timeouts so far=7   breaker after this tick=CLOSED    
+
+  existing calls: 001=CONNECTED, 002=CONNECTED, 003=CONNECTED, 004=CONNECTED, 005=CONNECTED, 006=CONNECTED  (never killed for the provider being quiet)
+  new calls:      7 dials timed out; each released its agent and borrower at once; then the breaker stopped further dials
+  retries:        attempts charged to those 7 borrowers: 0 (a provider fault is not the borrower's attempt); they become due again after 30 s
+  pacing:         REJECTED while OPEN; HALF_OPEN lets one probe through; its success closes the breaker
+
+====================================================================================================
+3. AGENT AVAILABILITY DROPS: 100 agents, 40 vanish within 5 s (predictive mode)
+====================================================================================================
+  t=120s warmed up in predictive mode
+
+  +0s  logged in=92   verdict=APPROVED              approved=0   
+  +1s  logged in=84   verdict=FALLBACK_PROGRESSIVE  approved=0   agent drop: logged-in fell 100 -> 84 within 30s
+  +2s  logged in=76   verdict=FALLBACK_PROGRESSIVE  approved=0   agent drop: logged-in fell 100 -> 76 within 30s
+  +3s  logged in=68   verdict=FALLBACK_PROGRESSIVE  approved=0   agent drop: logged-in fell 100 -> 68 within 30s
+  +4s  logged in=60   verdict=FALLBACK_PROGRESSIVE  approved=0   agent drop: logged-in fell 100 -> 60 within 30s
+  +5s  logged in=60   verdict=FALLBACK_PROGRESSIVE  approved=0   agent drop: logged-in fell 100 -> 60 within 30s
+  +6s  logged in=60   verdict=FALLBACK_PROGRESSIVE  approved=0   agent drop: logged-in fell 100 -> 60 within 30s
+  +7s  logged in=60   verdict=FALLBACK_PROGRESSIVE  approved=0   agent drop: logged-in fell 100 -> 60 within 30s
+
+  -> pacing recounts agents from the DB every tick; safety forces progressive as soon as the drop
+     crosses 15% of the 30 s peak, and stays there for a 60 s cool-down.
+
+====================================================================================================
+4. DUPLICATE EVENTS: the same provider event arrives multiple times
+====================================================================================================
+  ANSWERED (id ev-1):              APPLIED
+  ANSWERED (id ev-1) again:        DUPLICATE_EVENT_ID
+  ANSWERED (id ev-1) again:        DUPLICATE_EVENT_ID
+  ANSWERED (new id ev-2, resent):  NOOP_SAME_STATE
+  call row version unchanged: 3 -> 3
+  COMPLETED (id ev-3):             APPLIED
+  COMPLETED (id ev-3) again:       DUPLICATE_EVENT_ID
+  t=  30.0s  one transition per real change     call=COMPLETED  agent=agent-000 WRAP_UP      borrower=DONE (attempts 0)
+
+====================================================================================================
+5. OUT-OF-ORDER EVENTS: COMPLETED, ANSWERED, RINGING  /  ANSWERED before RINGING
+====================================================================================================
+  COMPLETED  -> APPLIED
+  ANSWERED   -> IGNORED_TERMINAL
+  RINGING    -> IGNORED_TERMINAL
+  t=   0.0s  terminal state absorbs late events call=COMPLETED  agent=agent-000 AVAILABLE    borrower=PENDING (attempts 1)
+  ANSWERED   -> APPLIED
+  RINGING    -> IGNORED_STALE
+  t=   1.0s  forward jump applied, stale one ignored call=CONNECTED  agent=agent-000 CONNECTED    borrower=RESERVED (attempts 0)

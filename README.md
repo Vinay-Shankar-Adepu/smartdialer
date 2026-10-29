@@ -1,5 +1,7 @@
 # SmartDialer
 
+[![tests](https://github.com/Vinay-Shankar-Adepu/smartdialer/actions/workflows/tests.yml/badge.svg)](https://github.com/Vinay-Shankar-Adepu/smartdialer/actions/workflows/tests.yml)
+
 A collections dialing engine with **progressive** and **predictive** pacing behind a **Safety Controller that cannot be bypassed**. It includes atomic agent reservation, idempotent and order-tolerant provider event handling, crash recovery, and a discrete-time simulator.
 
 Built for the CredResolve technical challenge. Pure Python 3.9+ standard library: SQLite, no frameworks.
@@ -44,6 +46,19 @@ Scenarios A–C use the answer rates and talk times from the assignment's table.
 | C | 70% | 180 s | 50 | B (0.5 s + 0–3 s jitter, 10% timeouts, duplicate / out-of-order / stale events) | 120 s full outage at t=1200 s |
 | D | 50% -> 70% -> 10% | 90 s -> 180 s -> 60 s | 100 | A | rates change at t=900 s and t=2400 s; 40 of 100 agents vanish within 5 s at t=1500 s and return at t=2100 s |
 
+## Watch the failure cases
+
+```bash
+python main.py --demo crash          # worker killed after dialing: adopted; ANSWERED -> crash -> COMPLETED
+python main.py --demo outage         # provider times out: existing calls, new calls, retries, pacing
+python main.py --demo agent-drop     # 40 of 100 agents vanish within 5 s
+python main.py --demo duplicates     # the same event delivered again and again
+python main.py --demo out-of-order   # COMPLETED, ANSWERED, RINGING
+python main.py --demo all
+```
+
+Each demo runs the real engine and prints the call, agent and borrower state after every step. Saved output: [`results/demos.txt`](results/demos.txt).
+
 ## Run the load test
 
 ```bash
@@ -58,11 +73,11 @@ Part 1 races 1–16 threads, each with its own SQLite connection, to reserve eve
 python -m unittest discover -s tests -t . -v
 ```
 
-There are 75 tests and they run in about 12 s. Each failure scenario has its own file:
+There are 79 tests and they run in about 12 s. CI runs them on Python 3.9–3.13, Linux and Windows. Each failure scenario has its own file:
 
 | File | Scenario |
 |---|---|
-| `tests/test_concurrent_reservation.py` | Two workers, same agent: exactly one reserves (real multi-connection SQLite); only one worker paces at a time, with failover |
+| `tests/test_concurrent_reservation.py` | Two workers, same agent: exactly one reserves (real multi-connection SQLite); only one worker paces at a time, with failover; a stalled former pacer can't dial |
 | `tests/test_worker_crash.py` | Agent RESERVED -> Borrower RESERVED -> dialed -> crash: adopted or released |
 | `tests/test_provider_outage.py` | Timeouts, circuit breaker, silent provider, ghost calls, in-flight calls survive, lost hangup event |
 | `tests/test_agent_disappearance.py` | 100 agents, 40 vanish in 5 s: fallback to progressive, calls re-routed |
@@ -70,6 +85,8 @@ There are 75 tests and they run in about 12 s. Each failure scenario has its own
 | `tests/test_out_of_order_events.py` | ANSWERED before RINGING, COMPLETED before ANSWERED, 15 min of Provider B chaos |
 | `tests/test_predictive_logic.py` | Pacing formula, "why 17 instead of 10", safety caps, answer rate 70% -> 10% and 10% -> 70% |
 | `tests/test_safety_bypass.py` | Forged, tampered, expired, over-budget and replayed permits are all refused |
+| `tests/test_demos.py` | Every `--demo` runs end to end |
+| `tests/test_docs.py` | The state diagrams in ARCHITECTURE.md match the code's transition tables |
 
 `tests/helpers.py` also provides `check_invariants()`, a cross-table consistency check. Among other things, it confirms that no agent is reserved twice and no busy agent points at a dead call. The fuzz and scenario tests run it after every simulated second.
 
@@ -122,6 +139,7 @@ smartdialer/
 ├── simulation/
 │   ├── scenarios.py          Scenarios A–D
 │   ├── simulator.py          runs the real engine on a simulated clock
+│   ├── demos.py              narrated failure-case walkthroughs (--demo)
 │   └── load_test.py          reservation race + control-loop cost at 100 / 1K / 10K agents
 ├── tests/                    failure-scenario tests (see above)
 └── results/                  saved simulation output

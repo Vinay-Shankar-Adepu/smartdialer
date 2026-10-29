@@ -222,6 +222,7 @@ class SafetyController:
         self._fallback_until = 0.0
         self._fallback_cause: List[str] = []
         self._unacked_dial_since: Optional[float] = None   # oldest accepted dial with no event since
+        self.worker_id: Optional[str] = None               # set by the engine: enables the pacer fence
         self._lock = threading.RLock()
 
     # ================================================================ evaluate
@@ -410,6 +411,12 @@ class SafetyController:
                 self._violation("permit expired")
             if call_id in self._redeemed_calls:
                 self._violation(f"call {call_id} was already dialed")
+            if self.worker_id is not None:
+                # Fence: a pacer that stalled past its lease must not keep dialing on old permits
+                # while another worker paces the same agents.
+                holder = self.db.lease_holder("pacer", self.clock.now())
+                if holder is not None and holder != self.worker_id:
+                    self._violation(f"pacer lease now held by {holder}; permits of {self.worker_id} are void")
             call = self.db.get_call(call_id)
             if call is None or call.state != CallState.RESERVED or call.provider_call_id:
                 self._violation(f"call {call_id} is not RESERVED and undialed")

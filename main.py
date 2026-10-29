@@ -3,12 +3,14 @@
     python main.py --mode progressive --scenario A
     python main.py --mode predictive  --scenario D --duration 3600
     python main.py --compare                     # every scenario x both modes, summary table
+    python main.py --demo all                    # narrated failure-case walkthroughs
 """
 import argparse
 import json
 import sys
 import time
 
+from simulation.demos import DEMOS, run_demo
 from simulation.scenarios import SCENARIOS
 from simulation.simulator import Simulator
 
@@ -52,8 +54,13 @@ def main(argv=None) -> int:
     parser.add_argument("--compare", action="store_true", help="run all scenarios in both modes")
     parser.add_argument("--no-explain", action="store_true", help="hide sample pacing explanations")
     parser.add_argument("--json", metavar="PATH", help="also write results as JSON")
+    parser.add_argument("--demo", choices=sorted(DEMOS) + ["all"],
+                        help="narrated walkthrough of a failure case")
     args = parser.parse_args(argv)
 
+    if args.demo:
+        run_demo(args.demo)
+        return 0
     if args.compare:
         results = compare(args.duration, args.seed)
     else:

@@ -11,6 +11,10 @@ Deterministic interleaving: A reads, B reserves, A's CAS must fail. ... ok
 test_two_workers_same_agent_exactly_one_wins (tests.test_concurrent_reservation.ConcurrentReservationTest) ... ok
 test_unavailable_agent_cannot_be_reserved (tests.test_concurrent_reservation.ConcurrentReservationTest) ... ok
 test_only_one_worker_paces_and_a_survivor_takes_over (tests.test_concurrent_reservation.SinglePacerTest) ... ok
+test_stalled_pacer_cannot_dial_after_losing_the_lease (tests.test_concurrent_reservation.SinglePacerTest) ... ok
+test_every_demo_runs (tests.test_demos.DemosTest) ... ok
+test_agent_diagram (tests.test_docs.StateDiagramsMatchCodeTest) ... ok
+test_call_diagram (tests.test_docs.StateDiagramsMatchCodeTest) ... ok
 test_concurrent_duplicate_delivery_applies_once (tests.test_duplicate_events.DuplicateEventsTest)
 Two webhook handlers receive the same event at the same instant. ... ok
 test_duplicate_answered_after_connect_does_not_reconnect (tests.test_duplicate_events.DuplicateEventsTest) ... ok
@@ -90,6 +94,6 @@ test_slow_worker_cannot_dial_after_reaper_cancelled_its_call (tests.test_worker_
 A paused worker (GC pause, network stall) wakes up after its lease was ... ok
 
 ----------------------------------------------------------------------
-Ran 75 tests in 8.633s
+Ran 79 tests in 10.209s
 
 OK

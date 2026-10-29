@@ -12,7 +12,8 @@ from core.database import Database
 from core.lock_manager import LockManager
 from core.models import Agent, Borrower
 from core.state_machines import AgentState, BorrowerState
-from dialer.pacing import PREDICTIVE
+from dialer.pacing import PREDICTIVE, PROGRESSIVE, PacingDecision
+from dialer.safety_controller import SafetyViolation
 from tests.helpers import Harness, TempDbDir, assert_invariants, seed_history
 
 
@@ -180,6 +181,19 @@ class SinglePacerTest(unittest.TestCase):
         self.assertIsNotNone(took_over_after)
         self.assertLessEqual(took_over_after, 3)
         assert_invariants(h.db)
+
+    def test_stalled_pacer_cannot_dial_after_losing_the_lease(self):
+        h = Harness(agents=5, borrowers=50)
+        w1, w2 = h.engine, h.spawn_worker("worker-2")
+        permit = w1.safety.evaluate(PacingDecision(PROGRESSIVE, 1, "t")).permit
+        self.assertIsNotNone(permit)
+        self.assertIsNotNone(w1.tick().safety, "worker-1 is the pacer")
+        h.clock.advance(4.0)                                   # worker-1 stalls; its 3 s lease expires
+        self.assertIsNotNone(w2.tick().safety, "worker-2 took over")
+        self.assertLess(h.clock.now(), permit.expires_at, "the old permit is still unexpired")
+        with self.assertRaises(SafetyViolation) as ctx:
+            w1.safety.redeem(permit, "any-call")
+        self.assertIn("pacer lease now held by worker-2", str(ctx.exception))
 
 
 if __name__ == "__main__":

@@ -1,0 +1,25 @@
+name: tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Unit and failure-scenario tests
+        run: python -m unittest discover -s tests -t . -v
+      - name: Smoke-run a short simulation and the quick load test
+        run: |
+          python main.py --mode predictive --scenario C --duration 300 --no-explain
+          python -m simulation.load_test --quick

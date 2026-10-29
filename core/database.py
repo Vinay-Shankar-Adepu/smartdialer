@@ -370,6 +370,10 @@ class Database:
             "WHERE leases.holder = excluded.holder OR leases.expires_at <= ?",
             (name, holder, now + ttl_s, now)) == 1
 
+    def lease_holder(self, name: str, now: float) -> Optional[str]:
+        row = self.query_one("SELECT holder FROM leases WHERE name = ? AND expires_at > ?", (name, now))
+        return row["holder"] if row else None
+
     # ------------------------------------------------------------------ audit
     def log_decision(self, at: float, requested_mode: str, recommended: int, verdict: str,
                      effective_mode: str, approved: int, summary: str, reasons: str) -> None:

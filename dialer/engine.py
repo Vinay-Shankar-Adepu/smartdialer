@@ -78,6 +78,7 @@ class DialerEngine:
         wrap = self.cfg.lifecycle.wrap_up_s
         self.reader = SnapshotReader(db, clock, wrap_up_s=wrap)
         self.safety = SafetyController(db, clock, SnapshotReader(db, clock, wrap_up_s=wrap), self.cfg.safety)
+        self.safety.worker_id = self.cfg.worker_id
         self.gateway = SafeDialGateway(provider, self.safety)
         self.lifecycle = CallLifecycle(db, self.locks, clock, self.cfg.lifecycle)
         self.events = EventProcessor(db, self.locks, self.lifecycle, clock)

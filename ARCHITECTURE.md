@@ -8,45 +8,36 @@ Guiding rule: **correctness over cleverness.** Every risky action goes through o
 
 ## 1. System architecture
 
-```
-                     +-----------------------------------------------------------+
-                     |   DialerEngine.tick()  (runs on every worker; pacing,     |
-                     |   safety and allocation only on the pacer-lease holder)   |
-                     +-----------------------------------------------------------+
-                                  |                                   ^
-                    Snapshot (own read of the DB)                      |
-                                  v                                   |
- +----------------+   PacingDecision   +--------------------+         |
- | Pacing engine  | -----------------> |  Safety Controller | -- independent Snapshot (own DB read)
- | (pure function)|  "dial 17, because |  - circuit breaker |         |
- |  progressive / |   ..."             |  - agent-drop det. |         |
- |  predictive    |                    |  - abandon guard   |         |
- +----------------+                    |  - capacity caps   |         |
-   no DB, no provider,                 +--------------------+         |
-   no allocator                           |  DialPermit (HMAC-signed, |
-                                          |  N calls, 5 s TTL)       |
-                                          v                          |
-                                 +------------------+                |
-                                 |  Call Allocator  |  claim borrower (CAS) -> call row
-                                 |                  |  -> reserve agent (CAS, progressive only)
-                                 +------------------+  -> call RESERVED
-                                          |  dial(permit, call_id)   |
-                                          v                          |
-                                 +------------------+  redeem(): permit genuine? unexpired?
-                                 | SafeDialGateway  |  budget left? call RESERVED? agent owned?
-                                 | (only holder of  |                |
-                                 |  the provider)   |                |
-                                 +------------------+                |
-                                          |  initiate_call(call_id = idempotency key)
-                                          v                          |
-                                 +------------------+   events (dup / out-of-order)
-                                 | Telecom provider | ---------------+-----> EventProcessor
-                                 |  A (clean) / B   |                        (dedup + state machine)
-                                 +------------------+                              |
-                                                                                   v
-     RecoveryService (every 5 s): expired leases -> adopt or cancel;      CallLifecycle: bridge
-     stuck calls -> lookup / hang up; orphan agents & borrowers -> release; ANSWERED -> CONNECTED,
-     CONNECTED for 30+ min -> ask provider, complete if the hangup was lost  or ABANDONED after 2 s
+```mermaid
+flowchart TD
+    DB[("SQLite: agents, borrowers, calls,<br/>provider_events, pacing_decisions, leases")]
+
+    subgraph PACER["Only on the worker holding the 'pacer' lease"]
+        P["Pacing engine<br/>progressive / predictive<br/><i>pure function: no DB, no provider</i>"]
+        S["Safety Controller<br/>breaker, agent-drop, answer-burst,<br/>abandon guard, capacity / ramp caps"]
+        A["Call Allocator<br/>claim borrower (CAS) -> call row<br/>-> reserve agent (CAS, progressive)"]
+    end
+
+    G["SafeDialGateway<br/><i>only holder of the provider</i><br/>redeem(): signed? unexpired? budget?<br/>call RESERVED? agent owned? still pacer?"]
+    T["Telecom provider<br/>A: fast, reliable / B: slow, chaotic"]
+
+    subgraph ANY["On every worker"]
+        E["EventProcessor<br/>event-id dedup + state machine"]
+        L["CallLifecycle<br/>bridge ANSWERED -> CONNECTED<br/>or ABANDONED + hang up after 2 s"]
+        R["RecoveryService every 5 s<br/>expired leases: adopt or cancel<br/>stuck calls, orphans, lost hangups"]
+    end
+
+    DB -- snapshot --> P
+    DB -- "independent snapshot" --> S
+    P -- "'dial 17, because ...'" --> S
+    S -- "DialPermit: HMAC-signed,<br/>N calls, 5 s TTL" --> A
+    A -- "dial(permit, call_id)" --> G
+    G -- "initiate_call(call_id = idempotency key)" --> T
+    T -- "events: duplicate, out of order, late" --> E
+    E --> DB
+    L --> DB
+    R -- "lookup(call_id)" --> G
+    R --> DB
 ```
 
 Separation of concerns:
@@ -66,25 +57,29 @@ Separation of concerns:
 
 ### Agent
 
-```
-                 login
-   +---------+ --------> +-----------+  reserve (CAS)  +----------+  provider accepted  +---------+
-   | OFFLINE |           | AVAILABLE | --------------> | RESERVED | ------------------> | DIALING |
-   +---------+ <-------- +-----------+ <-------------- +----------+ <------------------ +---------+
-        ^       logout     |      ^   release (dial         |         no answer / busy /     |
-        |                  | pause|   failed, cancelled)    |         failed: release        |
-        |                  v      |                         | predictive bridge              | answered:
-        |               +--------+                          | (answered call grabs           | bridge
-        |               | PAUSED |                          |  an idle agent)                |
-        |               +--------+                          v                                |
-        |                                             +-----------+ <------------------------+
-        |   any state -> OFFLINE on disappearance     | CONNECTED |
-        +-------------------------------------------- +-----------+
-                                                            | call ends
-                                                            v
-                                     AVAILABLE <---- +---------+ ----> PAUSED / OFFLINE
-                                     (wrap_until)    | WRAP_UP |       (logout_requested)
-                                                     +---------+
+Exactly the edges in `AGENT_TRANSITIONS` (`core/state_machines.py`); any other move raises `InvalidTransition`. `tests/test_docs.py` fails if this diagram and the code drift apart.
+
+```mermaid
+stateDiagram-v2
+    [*] --> OFFLINE
+    OFFLINE --> AVAILABLE: login
+    AVAILABLE --> RESERVED: reserve (version CAS, one winner)
+    AVAILABLE --> PAUSED: pause
+    PAUSED --> AVAILABLE: resume
+    RESERVED --> DIALING: provider accepted the dial
+    RESERVED --> AVAILABLE: dial failed / call cancelled
+    RESERVED --> CONNECTED: predictive bridge (answered call takes an idle agent)
+    DIALING --> CONNECTED: borrower answered, bridged
+    DIALING --> AVAILABLE: no answer / busy / failed
+    CONNECTED --> WRAP_UP: call ended
+    WRAP_UP --> AVAILABLE: wrap_until passed
+    WRAP_UP --> PAUSED: pause requested
+    AVAILABLE --> OFFLINE: logout / disappeared
+    RESERVED --> OFFLINE: disappeared
+    DIALING --> OFFLINE: disappeared
+    CONNECTED --> OFFLINE: disappeared
+    WRAP_UP --> OFFLINE: logout requested / disappeared
+    PAUSED --> OFFLINE: logout / disappeared
 ```
 
 * **RESERVED** = exclusively held for exactly one call (`reserved_for_call_id`). Only one CAS can win it.
@@ -93,15 +88,41 @@ Separation of concerns:
 
 ### Call
 
+Exactly the edges in `CALL_TRANSITIONS` (checked by `tests/test_docs.py`). The "jump" edges (e.g. RESERVED -> ANSWERED) exist because provider events can be lost or arrive late; a call only ever moves forward.
+
+```mermaid
+stateDiagram-v2
+    [*] --> QUEUED: borrower claimed
+    QUEUED --> RESERVED: agent reserved (progressive) / lines approved (predictive)
+    QUEUED --> CANCELLED
+    RESERVED --> INITIATED: provider accepted
+    RESERVED --> RINGING: jump
+    RESERVED --> ANSWERED: jump
+    RESERVED --> CANCELLED: worker crash, not dialed
+    INITIATED --> RINGING
+    INITIATED --> ANSWERED: jump
+    RINGING --> ANSWERED
+    ANSWERED --> CONNECTED: bridged to an agent
+    ANSWERED --> ABANDONED: no agent within 2 s, hung up
+    CONNECTED --> COMPLETED
+    RESERVED --> FAILED
+    INITIATED --> FAILED: timeout / no answer / busy
+    RINGING --> FAILED: no answer / busy
+    ANSWERED --> FAILED
+    CONNECTED --> FAILED
+    INITIATED --> CANCELLED
+    RINGING --> CANCELLED
+    RESERVED --> COMPLETED: jump
+    INITIATED --> COMPLETED: jump
+    RINGING --> COMPLETED: jump
+    ANSWERED --> COMPLETED
+    COMPLETED --> [*]
+    FAILED --> [*]
+    CANCELLED --> [*]
+    ABANDONED --> [*]
 ```
- QUEUED --> RESERVED --> INITIATED --> RINGING --> ANSWERED --> CONNECTED --> COMPLETED
-   |           |  \           |  \        |  \        |   \           |
-   |           |   \--------->+---\------>+---\------>+    \--> ABANDONED (no agent within 2 s)
-   v           v      forward jumps allowed (missing/late events)       |
- CANCELLED  CANCELLED / FAILED            any pre-connect state --> COMPLETED / FAILED / CANCELLED
-                                                                   CONNECTED --> COMPLETED / FAILED
- Terminal: COMPLETED, FAILED(reason), CANCELLED, ABANDONED. Nothing leaves a terminal state.
-```
+
+Terminal states: COMPLETED, FAILED (with a reason), CANCELLED, ABANDONED. Nothing leaves a terminal state.
 
 | State | Meaning | Who owns it |
 |---|---|---|
@@ -237,7 +258,7 @@ Most of the work is safe on any number of workers because it is CAS-guarded or i
 
 Pacing is the exception. Two safety controllers that both read "10 free agents" would each approve overdial for those same 10 agents, and the campaign would ring twice as many lines as planned. Progressive mode is immune (every call must win an agent CAS), but predictive is not.
 
-So each tick, a worker first tries to take or renew a 3 s **pacer lease**: one atomic upsert on a `leases` row (`... WHERE holder = me OR expires_at <= now`). Only the holder runs pacing, safety and the allocator. If it dies, the lease expires and another worker takes over within 3 s (`SinglePacerTest`). Kafka, Redis or ZooKeeper aren't needed for this; the database we already trust for reservations does it in one statement.
+So each tick, a worker first tries to take or renew a 3 s **pacer lease**: one atomic upsert on a `leases` row (`... WHERE holder = me OR expires_at <= now`). Only the holder runs pacing, safety and the allocator. If it dies, the lease expires and another worker takes over within 3 s (`SinglePacerTest`). If it was only stalled and wakes up holding unexpired permits, `redeem()` sees that another worker now holds the lease and refuses every dial. Kafka, Redis or ZooKeeper aren't needed for this; the database we already trust for reservations does it in one statement.
 
 | Concern | How it's handled |
 |---|---|
@@ -337,7 +358,7 @@ So, in order:
 | 2 | **Hot rows on agent reservation** (measured: 13–36% lost CAS at 16 workers) | all workers pick the *same* longest-idle agents | `FOR UPDATE SKIP LOCKED` (Postgres) or random-of-top-K candidates; better, give each allocator its own team of agents so they never compete |
 | 3 | **Snapshot queries every tick** | pacing and safety each aggregate the calls table every second; cost grows with call history | counters maintained incrementally by the event processor, per campaign |
 | 4 | **Single control loop** | one tick does events, bridging, recovery and dialing in series | webhook ingestors -> queue partitioned by call_id (keeps per-call order) -> event workers; a pacer per campaign (the lease already exists); a separate reaper |
-| 5 | **Pacer per campaign** | one pacer is right for safety (no double-spent headroom), but it is a single point per campaign | already lease-based with failover in 3 s; at scale, shard campaigns so each pacer is small, and add a fencing token |
+| 5 | **Pacer per campaign** | one pacer is right for safety (no double-spent headroom), but it is a single point per campaign | already lease-based with failover in 3 s, and `redeem()` refuses dials once another worker holds the lease; at scale, shard campaigns so each pacer is small |
 | 6 | **Provider CPS limits** | 400 dials/s exceeds a typical single trunk | multi-provider routing with per-provider breakers and token buckets (the `max_dials_per_tick` cap becomes a per-provider rate limiter) |
 | 7 | **Bridge latency** | ANSWERED -> CONNECTED must take under 2 s (the silent-call rule) | event-driven bridging (connect inside the ANSWERED handler, with the polling pass only as a safety net); co-locate with the media server |
 
@@ -383,7 +404,7 @@ Further improvements I would make next:
 
 * **Sudden answer-rate jumps.** History says 10%, reality is 70%: in a 20-agent test, 36 of ~110 answered calls were abandoned before the guards stopped dialing (`test_jump_10_to_70_is_bounded_and_stops_fast`). Exposure is bounded by `max_lines_per_free_agent` (5) and the ramp (0.5 new lines per free agent per tick). Lowering either lowers this risk and lowers utilization at low answer rates; it is a policy knob, not a bug I can code away. A real deployment would also start each new list or time-of-day segment in progressive.
 * **Single-node SQLite.** The concurrency guarantees are real, but throughput is bounded (section 6, measured).
-* **Pacer fencing.** If the pacer stalls longer than its 3 s lease *in the middle of a tick*, a second worker can start pacing while the first finishes; the overlap is at most one tick of permits. A fencing token (lease version) checked in `redeem()` would close it.
+* **Pacer fencing is check-then-act.** `redeem()` refuses a dial once another worker holds the pacer lease (`test_stalled_pacer_cannot_dial_after_losing_the_lease`), so a stalled former pacer can't keep dialing on old permits. The check and the provider request aren't atomic, though: a pacer that stalls *between* them could still send one dial. With Postgres, the lease check and the call's RESERVED -> dialing write could share one transaction.
 * **In-memory safety state.** The breaker and agent-drop history live in the pacer's memory. A new pacer starts without them, which is safe: it starts with fresh windows and has to re-earn predictive from DB data.
 * **Ghost calls during a full outage.** A provider timeout whose call did go out, while the provider can't even be queried, could ring a borrower with no agent. We hang up by our call id as soon as the provider is reachable, and late events for that call are ignored.
 * **Stationary answer-rate model** inside the 5-minute window. The 1-minute check and the guards cover shifts, but a better model would weight recent outcomes more and segment by list / time of day.
@@ -407,7 +428,7 @@ Further improvements I would make next:
 **What are you least confident about?** The answer-rate jump above: the risk is bounded and measured, not removed. Second, the 2 s answered-caller hold assumes the bridge runs every second; at scale it must be event-driven (bridge in the ANSWERED handler) to keep that promise.
 
 **What would you do with another week?**
-1. Event-driven bridging, plus a fencing token on the pacer lease.
+1. Event-driven bridging (connect inside the ANSWERED handler).
 2. Postgres with `FOR UPDATE SKIP LOCKED` candidate selection, and run the load test against it.
 3. An answer-rate model segmented by list and time of day, with a recency-weighted estimate.
 4. "Progressive-plus": reserve the agent a few seconds before their wrap-up ends. That captures much of predictive's gain with zero abandon risk.
